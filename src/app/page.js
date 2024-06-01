@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import "./globals.css";
 import { useReactToPrint } from "react-to-print";
@@ -11,7 +12,6 @@ import DataTable from "react-data-table-component";
 import * as XLSX from "xlsx";
 
 export default function Home() {
-  const [success, setSuccess] = useState("");
   const [details, setDetails] = useState({
     LR_date: "",
     Party_name: "",
@@ -46,6 +46,22 @@ export default function Home() {
   const contentToPrint = useRef(null);
   const [data, setData] = useState([]);
   const [data2, setData2] = useState([]);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [currentTab, setCurrentTab] = useState(0); // State to keep track of the current tab index
+  const totalTabs = 3; // Total number of tabs
+  const handleNext = () => {
+    if (currentTab < totalTabs - 1) {
+      setCurrentTab((prevTab) => prevTab + 1);
+    }
+  };
+  const handleBack = () => {
+    if (currentTab > 0) {
+      setCurrentTab((prevTab) => prevTab - 1);
+    }
+  };
+  const handleSaveAndNext = () => {
+    handleNext();
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -81,7 +97,6 @@ export default function Home() {
       .post("http://localhost:3000/all-letters", convertedDetails)
       .then((res) => {
         console.log(res.status, "resss");
-        setSuccess(res.status);
         console.log(details.Party_name);
       })
       .catch((error) => {
@@ -98,30 +113,48 @@ export default function Home() {
 
   const columns = [
     {
-      name: "Name",
-      selector: (row) => row.name,
+      name: "LR Number",
+      selector: (row) => row.LR_number,
       sortable: true,
     },
     {
-      name: "Email",
-      selector: (row) => row.email,
-      sortable: true,
-    },
-    {
-      name: "Age",
-      selector: (row) => row.age,
-      sortable: true,
-    },
-  ];
-  const columns1 = [
-    {
-      name: "LR_date",
-      selector: (row) => row.LR_date,
-      sortable: true,
-    },
-    {
-      name: "Party_name",
+      name: "Party Name",
       selector: (row) => row.Party_name,
+      sortable: true,
+    },
+    {
+      name: "Address",
+      selector: (row) => row.Address,
+      sortable: true,
+    },
+    {
+      name: "Material",
+      selector: (row) => row.Material,
+      sortable: true,
+    },
+    {
+      name: "Quantity",
+      selector: (row) => row.Quantity,
+      sortable: true,
+    },
+    {
+      name: "Source location",
+      selector: (row) => row.Source_location,
+      sortable: true,
+    },
+    {
+      name: "Destination location",
+      selector: (row) => row.Destination_location,
+      sortable: true,
+    },
+    {
+      name: "Dep time",
+      selector: (row) => format(new Date(row.Dep_time), "yyyy-mm-dd"),
+      sortable: true,
+    },
+    {
+      name: "Arr time",
+      selector: (row) => row.Arr_time,
       sortable: true,
     },
     {
@@ -129,47 +162,14 @@ export default function Home() {
       selector: (row) => row.Cash,
       sortable: true,
     },
-  ];
-
-  const data1 = [
     {
-      id: 1,
-      name: "jamil",
-      email: "jamil@gmail.com",
-      age: "20",
-    },
-
-    {
-      id: 4,
-      name: "Sanju",
-      email: "Sanju@gmail.com",
-      age: "20",
-    },
-    {
-      id: 2,
-      name: "Umesh",
-      email: "Umesh@gmail.com",
-      age: "30",
-    },
-    {
-      id: 3,
-      name: "Manohar",
-      email: "mano@gmail.com",
-      age: "30",
+      cell: (row) => <button onClick={() => handlePrint(row)}>Print</button>,
+      ignoreRowClick: true,
+      allowOverflow: true,
+      button: true,
     },
   ];
-  const [records, setRecords] = useState(data1);
 
-  function handleFilter(event) {
-    const newData = data1.filter((row) => {
-      return row.name.toLowerCase().includes(event.target.value.toLowerCase());
-    });
-    setRecords(newData);
-  }
-  const data4 = [
-    { id: 1, name: "John Doe", age: 30, profession: "Developer" },
-    { id: 2, name: "Jane Smith", age: 25, profession: "Designer" },
-  ];
   useEffect(() => {
     axios
       .get("http://localhost:3000/all-letters")
@@ -184,17 +184,17 @@ export default function Home() {
   }, []);
 
   function handleFilter1(event) {
-    if (event.target.value.length > 0) {
+    const filterValue = event.target.value;
+    if (filterValue.length > 0) {
       const newData = data.filter((row) => {
-        return row.Party_name.toLowerCase().includes(
-          event.target.value.toLowerCase()
-        );
+        return row.LR_number && String(row.LR_number).includes(filterValue);
       });
       setData(newData);
     } else {
       setData(data2);
     }
   }
+
   // const [products, setProducts] = useState([]);
 
   //   useEffect(() => {
@@ -204,10 +204,35 @@ export default function Home() {
   //   }, []);
   const handleDownload = () => {
     const rows = data.map((product) => ({
-      LR_Number : product.LR_number,
+      LR_Number: product.LR_number,
+      LR_date: formatproduct.LR_date,
       Party_name: product.Party_name,
-      
+      Address: product.Address,
+      State: product.State,
+      District: product.District,
+      City: product.City,
+      Pincode: product.Pincode,
+      GST_number: product.GST_number,
+      Material: product.Material,
+      Quantity: product.Quantity,
+      Truck_number: product.Truck_number,
+      Source_location: product.Source_location,
+      Destination_location: product.Destination_location,
+      Dep_time: product.Dep_time,
+      Arr_time: product.Arr_time,
+      Driver_number: product.Driver_number,
       Cash: product.Cash,
+      RTGS: product.RTGS,
+      Disel: product.Disel,
+      Lorry_Freight: product.Lorry_Freight,
+      Loading_charges: product.Loading_charges,
+      Driver_allowance: product.Driver_allowance,
+      Contonment: product.Contonment,
+      Other_charges: product.Other_charges,
+      Total: product.Total,
+      Advance_paid: product.Advance_paid,
+      Balance: product.Balance,
+      Ruppes_in_words: product.Ruppes_in_words,
     }));
 
     // create workbook and worksheet
@@ -218,20 +243,335 @@ export default function Home() {
 
     // customize header names
     XLSX.utils.sheet_add_aoa(worksheet, [
-      ["LR Number", "Party Name", "Cash"],
+      [
+        "LR Number",
+        "LR_date",
+        "Party Name",
+        "Address",
+        "State",
+        "District",
+        "City",
+        "Pincode",
+        "GST_number",
+        "Material",
+        "Quantity",
+        "Truck_number",
+        "Source_location",
+        "Destination_location",
+        "Dep_time",
+        "Arr_time",
+        "Driver_number",
+        "Cash",
+        "RTGS",
+        "Disel",
+        "Lorry_Freight",
+        "Loading_charges",
+        "Driver_allowance",
+        "Contonment",
+        "Other_charges",
+        "Total",
+        "Advance_paid",
+        "Balance",
+        "Ruppes_in_words",
+      ],
     ]);
 
     XLSX.writeFile(workbook, "ReportFor2023.xlsx", { compression: true });
   };
+  const handleDownloadSelected = () => {
+    const rows = selectedRows.map((product) => ({
+      LR_Number: product.LR_number,
+      LR_date: product.LR_date,
+      Party_name: product.Party_name,
+      Address: product.Address,
+      State: product.State,
+      District: product.District,
+      City: product.City,
+      Pincode: product.Pincode,
+      GST_number: product.GST_number,
+      Material: product.Material,
+      Quantity: product.Quantity,
+      Truck_number: product.Truck_number,
+      Source_location: product.Source_location,
+      Destination_location: product.Destination_location,
+      Dep_time: product.Dep_time,
+      Arr_time: product.Arr_time,
+      Driver_number: product.Driver_number,
+      Cash: product.Cash,
+      RTGS: product.RTGS,
+      Disel: product.Disel,
+      Lorry_Freight: product.Lorry_Freight,
+      Loading_charges: product.Loading_charges,
+      Driver_allowance: product.Driver_allowance,
+      Contonment: product.Contonment,
+      Other_charges: product.Other_charges,
+      Total: product.Total,
+      Advance_paid: product.Advance_paid,
+      Balance: product.Balance,
+      Ruppes_in_words: product.Ruppes_in_words,
+    }));
+
+    // create workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "data");
+
+    // customize header names
+    XLSX.utils.sheet_add_aoa(worksheet, [
+      [
+        "LR Number",
+        "Party Name",
+        "Cash",
+        "LR_date",
+        "Address",
+        "State",
+        "District",
+        "City",
+        "Pincode",
+        "GST_number",
+        "Material",
+        "Quantity",
+        "Truck_number",
+        "Source_location",
+        "Destination_location",
+        "Dep_time",
+        "Arr_time",
+        "Driver_number",
+        "RTGS",
+        "Disel",
+        "Lorry_Freight",
+        "Loading_charges",
+        "Driver_allowance",
+        "Contonment",
+        "Other_charges",
+        "Total",
+        "Advance_paid",
+        "Balance",
+        "Ruppes_in_words",
+      ],
+    ]);
+
+    XLSX.writeFile(workbook, "SelectedRecords.xlsx", { compression: true });
+  };
+
   return (
     <>
       <div className="main">
         {/* <ExcelExport data={data4} /> */}
-        <button onClick={handleDownload}>DOWNLOAD EXCEL</button>
+
         <div className="content">
-          <h1>Registration Form</h1>
           <form className="form" onSubmit={handleSubmit}>
             <div className="form_container">
+              {currentTab === 0 && (
+                <>
+                  <TextInput
+                    type="date"
+                    label="LR date"
+                    name="LR_date"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="text"
+                    label="Party name"
+                    name="Party_name"
+                    required
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="text"
+                    label="Address"
+                    name="Address"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="text"
+                    label="State"
+                    name="State"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="text"
+                    label="District"
+                    name="District"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="text"
+                    label="City"
+                    name="City"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="number"
+                    label="Pincode"
+                    name="Pincode"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="text"
+                    name="GST_number"
+                    label="GST number"
+                    onChange={handleInputChange}
+                  />
+                </>
+              )}
+              {currentTab === 1 && (
+                <>
+                  <TextInput
+                    type="text"
+                    label="Material"
+                    name="Material"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="number"
+                    label="Quantity"
+                    name="Quantity"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="text"
+                    label="Truck number"
+                    name="Truck_number"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="text"
+                    label="Source location"
+                    name="Source_location"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="text"
+                    label="Destination location"
+                    name="Destination_location"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="datetime-local"
+                    label="Arr time"
+                    name="Arr_time"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="datetime-local"
+                    label="Dep time"
+                    name="Dep_time"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="text"
+                    label="Driver number"
+                    name="Driver_number"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="number"
+                    label="Cash"
+                    name="Cash"
+                    onChange={handleInputChange}
+                  />
+                </>
+              )}
+              {currentTab === 2 && (
+                <>
+                  <TextInput
+                    type="number"
+                    label="RTGS"
+                    name="RTGS"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="number"
+                    label="Diesel"
+                    name="Disel"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="number"
+                    label="Lorry freight"
+                    name="Lorry_Freight"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="number"
+                    label="Loading charges"
+                    name="Loading_charges"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="number"
+                    label="Driver allowance"
+                    name="Driver_allowance"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="number"
+                    label="Contonment"
+                    name="Contonment"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="number"
+                    label="Other charges"
+                    name="Other_charges"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="number"
+                    label="Total"
+                    name="Total"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="number"
+                    label="Advance paid"
+                    name="Advance_paid"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="number"
+                    label="Balance"
+                    name="Balance"
+                    onChange={handleInputChange}
+                  />
+                  <TextInput
+                    type="text"
+                    label="Rupees in words"
+                    name="Ruppes_in_words"
+                    onChange={handleInputChange}
+                  />
+                </>
+              )}
+              {/* Render more tabs as needed */}
+            </div>
+            {/* Render Next button for all tabs except the last one */}
+            <div className="buttons">
+              {currentTab > 0 && (
+                <button className="button" type="button" onClick={handleBack}>
+                  Back
+                </button>
+              )}
+              {/* Render Next button for all tabs except the last one */}
+              {currentTab < totalTabs - 1 && (
+                <button className="button" type="button" onClick={handleNext}>
+                  Next
+                </button>
+              )}
+              {/* Render Save and Next button for the last tab */}
+              {currentTab === totalTabs - 1 && (
+                <button
+                  className="button"
+                  type="submit"
+                  // onClick={handleSaveAndNext}
+                >
+                  Submit
+                </button>
+              )}
+            </div>
+
+            {/* <div className="form_container">
               <TextInput
                 type="date"
                 label="LR date"
@@ -401,10 +741,10 @@ export default function Home() {
                 name="Ruppes_in_words"
                 onChange={handleInputChange}
               />
-            </div>
-            <button className="button" type="submit">
+            </div> */}
+            {/* <button className="button" type="submit">
               Submit
-            </button>
+            </button> */}
           </form>
         </div>
         <div className="receipt" ref={contentToPrint}>
@@ -488,14 +828,23 @@ export default function Home() {
           fixedHeader
           pagination
         ></DataTable> */}
-        <input type="text" onChange={handleFilter1} />
+        {/* <input type="text" onChange={handleFilter1} />
+        <div>
+          <button onClick={handleDownload}>DOWNLOAD EXCEL</button>
+          <button onClick={handleDownloadSelected}>
+            DOWNLOAD SELECTED EXCEL
+          </button>
+        </div>
         <DataTable
-          columns={columns1}
+          columns={columns}
           data={data}
           selectableRows
           fixedHeader
           pagination
-        ></DataTable>
+          onSelectedRowsChange={({ selectedRows }) =>
+            setSelectedRows(selectedRows)
+          }
+        ></DataTable> */}
       </div>
     </>
   );

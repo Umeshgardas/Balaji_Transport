@@ -1,0 +1,36 @@
+/* components/Navbar.module.css */
+.navbar {
+  background-color: #333;
+  padding: 1rem;
+}
+
+.navList {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  gap: 4rem;
+  margin: 0;
+  padding: 0;
+}
+
+.navItem {
+  margin: 0;
+  color: white;
+  text-decoration: none;
+  font-size: 1.2rem;
+}
+
+/* .navItem a {
+  color: white;
+  text-decoration: none;
+  font-size: 1.2rem;
+} */
+
+.navItem:hover {
+  text-decoration: underline;
+}
+
+/* Style for active link */
+.navItem.active {
+  font-weight: bold;
+}
